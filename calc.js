@@ -7,5 +7,9 @@ const valid=p=> typeof p.name==='string'&&Number.isSafeInteger(p.price)&&p.price
 const payment=(p,index)=>{if(!valid(p))return 0;const offset=index-month(p.year,p.month);if(offset<0||offset>=p.loan)return 0;const base=Math.floor(p.price/p.loan);return offset===p.loan-1?p.price-base*(p.loan-1):base};
 const dates=p=>({start:month(p.year,p.month),loanEnd:month(p.year,p.month)+p.loan-1,useEnd:month(p.year,p.month)+p.use-1,replacement:month(p.year,p.month)+p.use});
 const total=(items,index)=>items.reduce((sum,p)=>sum+payment(p,index),0);
-const api={month,parts,label,valid,payment,dates,total};root.Planner=api;if(typeof module!=='undefined')module.exports=api;
+const paid=(p,index)=>{if(!valid(p))return 0;const count=Math.max(0,Math.min(p.loan,index-month(p.year,p.month)+1));return count===p.loan?p.price:Math.floor(p.price/p.loan)*count;};
+const balance=(p,index)=>!valid(p)||index<month(p.year,p.month)?0:p.price-paid(p,index);
+const cumulative=(items,index)=>items.reduce((sum,p)=>sum+paid(p,index),0);
+const debt=(items,index)=>items.reduce((sum,p)=>sum+balance(p,index),0);
+const api={paid,balance,cumulative,debt,month,parts,label,valid,payment,dates,total};root.Planner=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
