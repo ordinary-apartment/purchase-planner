@@ -64,7 +64,11 @@ GitHub Pages：このフォルダーのindex.html / styles.css / calc.js / app.j
 
 Cloudflare Pages：ビルド不要の静的サイトとして上記4ファイルを同じディレクトリにアップロードします。
 
-今回はローカル納品まで。公開先へのデプロイは行っていません。
+GitHub Pages公開先：https://ordinary-apartment.github.io/purchase-planner/
+
+リポジトリ：https://github.com/ordinary-apartment/purchase-planner
+
+mainブランチのルートから公開します。
 
 ## データについて
 
