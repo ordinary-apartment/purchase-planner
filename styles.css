@@ -66,3 +66,31 @@
 
 #products textarea.name{font:inherit;font-size:16px;width:100%;max-width:100%;min-width:0;min-height:72px;resize:vertical;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-all;border:1px solid #d2d2d7;border-radius:6px;padding:7px 2px;background:white;color:#1d1d1f}
 #products textarea:focus-visible{outline:3px solid #0071e380;outline-offset:2px}
+
+.product-scroll{padding-right:30px}
+#products th:nth-child(n){width:auto;font-size:.75rem}
+#products th:nth-child(1){width:13%}#products th:nth-child(2){width:14%}
+#products th:nth-child(3){width:9%}#products th:nth-child(4){width:6%}
+#products th:nth-child(5){width:7%}#products th:nth-child(6){width:7%}
+#products th:nth-child(7){width:7%}#products th:nth-child(8){width:10%}
+#products th:nth-child(9){width:27%}
+#products .col-details{position:relative;text-align:left}
+.schedule-details{margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 5px;font-size:.75rem;line-height:1.6}
+.schedule-details dt{color:#6e6e73}.schedule-details dd{margin:0;color:#1d1d1f;font-variant-numeric:tabular-nums}
+#products .remove-row{position:absolute;left:100%;top:50%;transform:translateY(-50%);width:28px;min-width:0;padding:0;border:0;background:transparent;color:#a44;font-size:24px;line-height:44px;min-height:44px;border-radius:6px}
+#products .remove-row:hover{background:#fff1f0}
+#products .use-preset{appearance:auto;-webkit-appearance:auto}
+.use-custom{margin-top:4px}.use-custom[hidden]{display:none}
+@media(max-width:599px){
+ #products th:nth-child(n){font-size:10px;line-height:1.5;word-break:normal;overflow-wrap:anywhere}
+ #products td{font-size:10px;padding:8px 1px}
+ #products input,#products select,#products textarea.name{font-size:10px;min-height:38px;padding:6px 0}
+ #products textarea.name{min-height:68px}
+ #products .repayment,#products .use-months{font-size:10px;line-height:1.5}
+ #products select{appearance:none;-webkit-appearance:none}
+ #products .use-preset{appearance:none;-webkit-appearance:none}
+ .schedule-details{display:block;font-size:9px;line-height:1.5}
+ .schedule-details dt{margin-top:5px}.schedule-details dt:first-child{margin-top:0}
+ .schedule-details dd{word-break:normal;overflow-wrap:anywhere}
+ #products input:focus,#products select:focus,#products textarea:focus{font-size:16px!important}
+}
