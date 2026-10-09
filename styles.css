@@ -127,3 +127,9 @@
 .current-balance{display:block;margin-top:6px;font-size:10px;font-weight:400;color:#6e6e73;line-height:1.5;overflow-wrap:anywhere;word-break:normal}.timeline .current-balance{font-size:10px}.timeline tfoot .cumulative-row td{background:#f2f7fc}.timeline tfoot .debt-row td{background:#edf2f7}
 
 .timeline .monthly-payment{display:block;font-size:.75rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.5;overflow-wrap:anywhere}.timeline .chart-mark{display:block;font-size:.65rem;margin-top:4px}
+
+#products textarea.name{height:44px;min-height:44px;resize:none;padding:8px 2px;border-radius:9px}
+#products .paired-details{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;align-items:start}
+#products .paired-details>div{min-width:0}
+#products .paired-details dt{margin-top:0}
+@media(max-width:599px){#products textarea.name{height:38px;min-height:38px;padding:6px 0;border-radius:4px}#products .paired-details{gap:3px}}
