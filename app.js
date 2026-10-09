@@ -1,0 +1,55 @@
+'use strict';
+const P=Planner,$=s=>document.querySelector(s),KEY='purchase-planner-v1',yen=n=>n.toLocaleString('ja-JP')+'円';
+const samples=()=>[{id:'sample-mac',name:'Mac',price:240000,year:2026,month:10,loan:24,use:72},{id:'sample-camera',name:'カメラ',price:200000,year:2028,month:10,loan:24,use:96},{id:'sample-phone',name:'iPhone',price:150000,year:2030,month:10,loan:24,use:48}];
+let items=samples(),start=P.month(2026,10),range=12,storageOK=true;
+function decode(data,draft=false){if(data.version!==1||!Array.isArray(data.items)||data.items.length>200)throw Error('形式が異なります。');if(!data.items.every(p=>p&&typeof p.name==='string'&&p.name.length<=200&&(draft?['price','year','month','loan','use'].every(k=>p[k]===null||typeof p[k]==='number'&&Number.isFinite(p[k])):P.valid(p))))throw Error('商品データの数値や商品名を確認してください。');return data.items.map(p=>({...p,id:typeof p.id==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(p.id)?p.id:crypto.randomUUID()}));}
+try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);items=decode(d,true);if(Number.isInteger(d.start)&&d.start>=P.month(1900,1)&&d.start<=P.month(2300,12))start=d.start;if([12,36,60,120].includes(d.range))range=d.range;}}catch(e){storageOK=false;$('#save-status').textContent='保存データを復元できませんでした';}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({version:1,items,start,range}));storageOK=true;$('#save-status').textContent='このブラウザに保存済み';}catch(e){storageOK=false;$('#save-status').textContent='保存できません。JSONで保存してください';}}
+function escapeHTML(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function years(selected){const now=new Date().getFullYear(),lo=Math.min(now-10,selected||now),hi=Math.max(now+30,selected||now);let s='';for(let y=lo;y<=hi;y++)s+=`<option value="${y}" ${y===selected?'selected':''}>${y}年</option>`;return s;}
+function renderRows(){ $('#rows').innerHTML=items.map((p,i)=>`<tr data-id="${escapeHTML(p.id)}">
+<td class="col-name"><textarea class="name" data-field="name" aria-label="${i+1}行目 商品名" maxlength="200" rows="3">${escapeHTML(p.name)}</textarea></td>
+<td class="col-product"><input class="price" data-field="price" inputmode="numeric" aria-label="${i+1}行目 価格（円）" value="${Number.isFinite(p.price)?p.price.toLocaleString('ja-JP'):''}"></td>
+<td class="col-purchase"><select data-field="year" aria-label="${i+1}行目 購入年">${years(p.year)}</select></td>
+<td class="col-purchase"><select data-field="month" aria-label="${i+1}行目 購入月">${Array.from({length:12},(_,n)=>`<option value="${n+1}" ${p.month===n+1?'selected':''}>${n+1}月</option>`).join('')}</select></td>
+<td class="col-period"><input data-field="loan" type="number" min="1" max="1200" step="1" aria-label="${i+1}行目 ローン期間（月）" value="${p.loan??''}"></td>
+<td class="col-period"><input data-field="useYears" type="number" inputmode="decimal" min="0.0833333333" max="100" step="any" aria-label="${i+1}行目 使用期間（年）" value="${p.useYears??(p.use==null?'':Number((p.use/12).toFixed(8)))}"></td>
+<td class="col-period"><output class="use-months"></output></td>
+<td class="col-payment money repayment"></td><td class="col-payment money final-payment"></td>
+<td class="col-dates loan-end"></td><td class="col-dates use-end"></td><td class="col-dates replacement"></td>
+<td class="col-product row-actions"><button class="danger" data-delete aria-label="${escapeHTML(p.name||'商品')}を削除">削除</button></td></tr>`).join('');update();}
+
+function update(){let invalid=0;items.forEach(p=>{const row=Array.from($('#rows').children).find(r=>r.dataset.id===p.id);if(!row)return;row.querySelector('.use-months').textContent=Number.isInteger(p.use)?`${p.use}か月`:'—か月';const ok=P.valid(p);row.querySelector('.price').setCustomValidity(Number.isSafeInteger(p.price)&&p.price>=0&&p.price<=1e12?'':'0〜1兆円の整数を入力してください');if(!ok){invalid++;row.querySelector('.repayment').textContent='—';for(const cls of ['final-payment','loan-end','use-end','replacement'])row.querySelector('.'+cls).textContent='—';return;}const base=Math.floor(p.price/p.loan),last=p.price-base*(p.loan-1),d=P.dates(p);row.querySelector('.repayment').textContent=yen(base);row.querySelector('.final-payment').textContent=yen(last);row.querySelector('.loan-end').textContent=P.label(d.loanEnd);row.querySelector('.use-end').textContent=P.label(d.useEnd);row.querySelector('.replacement').textContent=P.label(d.replacement);});$('#validation').textContent=invalid?`${invalid}件の入力に不備があります。価格は0〜1兆円、ローンは1〜1,200か月、使用年数は月換算で1〜1,200か月の整数になる値を入力してください（例：6年、1.5年）。不備のある商品は計算から除外します。`:'';renderChart();}
+function renderChart(){
+ const p=P.parts(start);$('#start').value=`${p.year}-${String(p.month).padStart(2,'0')}`;$('#range').value=range;
+ const width=window.innerWidth||1200,blockSize=width<600?3:width<1100?6:12;let html='';
+ for(let offset=0;offset<range;offset+=blockSize){
+ const months=Array.from({length:Math.min(blockSize,range-offset)},(_,i)=>start+offset+i);
+ html+=`<div class="chart-block"><p class="block-period">${P.label(months[0])} — ${P.label(months.at(-1))}</p><table class="timeline"><colgroup><col class="name-col">${months.map(()=>'<col>').join('')}</colgroup><thead><tr><th>商品</th>${months.map(m=>`<th><span class="month-year">${P.parts(m).year}</span>${P.parts(m).month}月</th>`).join('')}</tr></thead><tbody>`;
+ html+=items.map(item=>{const ok=P.valid(item),d=ok?P.dates(item):null;return `<tr><th title="${escapeHTML(item.name)}">${escapeHTML(item.name||'名称未入力')}</th>${months.map(m=>{const paying=ok&&m>=d.start&&m<=d.loanEnd,using=ok&&m>=d.start&&m<=d.useEnd;const marks=[];if(ok&&m===d.loanEnd)marks.push('返済終');if(ok&&m===d.useEnd)marks.push('使用終');return `<td class="slot ${paying?'loan':using?'use':'outside'}" title="${escapeHTML(P.label(m)+'：'+yen(P.payment(item,m)))}">${marks.join('<br>')}${paying&&!using?'<br>使用終了後':''}</td>`}).join('')}</tr>`}).join('');
+ if(!items.length)html+=`<tr><td colspan="${months.length+1}">商品を追加してください</td></tr>`;
+ html+=`</tbody><tfoot><tr><th>支払総額</th>${months.map(m=>`<td>${yen(P.total(items,m))}</td>`).join('')}</tr></tfoot></table></div>`;
+ }
+ $('#chart').innerHTML=html;
+}
+let chartResize;window.addEventListener('resize',()=>{clearTimeout(chartResize);chartResize=setTimeout(renderChart,120);});
+
+$('#rows').addEventListener('input',e=>{const field=e.target.dataset.field;if(!field)return;const p=items.find(p=>p.id===e.target.closest('tr').dataset.id);const raw=e.target.value;if(field==='useYears'){p.useYears=raw.trim()===''?null:Number(raw);const months=p.useYears===null?null:p.useYears*12;p.use=months===null?null:Math.abs(months-Math.round(months))<0.000001?Math.round(months):months;}else{p[field]=field==='name'?raw:raw.trim()===''?null:Number(field==='price'?raw.replace(/,/g,''):raw);}update();save();});
+$('#rows').addEventListener('focusout',e=>{if(e.target.dataset.field==='price'){const p=items.find(p=>p.id===e.target.closest('tr').dataset.id);if(Number.isFinite(p.price))e.target.value=p.price.toLocaleString('ja-JP');}});
+$('#rows').addEventListener('click',e=>{if(e.target.closest('[data-delete]')){items=items.filter(p=>p.id!==e.target.closest('tr').dataset.id);renderRows();save();}});
+function add(next){const last=items.at(-1);if(next&&last&&!P.valid(last)){message('最後の商品の入力を修正してください。');return;}const date=next&&last?P.parts(P.dates(last).loanEnd+1):{year:new Date().getFullYear(),month:new Date().getMonth()+1};items.push({id:crypto.randomUUID(),name:'',price:0,year:date.year,month:date.month,loan:24,use:60,category:'',salesUrl:''});renderRows();save();$('#rows').lastElementChild.querySelector('.name').focus();}
+$('#add').onclick=()=>add(false);$('#add-next').onclick=()=>add(true);
+$('#range').onchange=e=>{range=Number(e.target.value);renderChart();save();};$('#start').onchange=e=>{if(e.target.value){const [y,m]=e.target.value.split('-').map(Number);if(y>=1900&&y<=2300){start=P.month(y,m);renderChart();save();}}};
+function move(dir){start=Math.max(P.month(1900,1),Math.min(P.month(2300,12),start+dir*range));renderChart();save();}$('#prev').onclick=()=>move(-1);$('#next').onclick=()=>move(1);
+function message(s){$('#message').textContent=s;}
+function download(text,type,name){const url=URL.createObjectURL(new Blob([text],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+$('#export').onclick=()=>{if(items.some(p=>!P.valid(p))){message('入力の不備を修正してから保存してください。');return;}download(JSON.stringify({version:1,items,start,range},null,2),'application/json','purchase-plan.json');message('JSONを保存しました。');};
+$('#import').onclick=()=>$('#file').click();$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;try{if(f.size>2e6)throw Error('ファイルは2MB以下にしてください。');const d=JSON.parse(await f.text()),next=decode(d);if(!confirm('現在の商品一覧を読み込んだデータで置き換えますか？'))return;items=next;if(Number.isInteger(d.start)&&d.start>=P.month(1900,1)&&d.start<=P.month(2300,12))start=d.start;if([12,36,60,120].includes(d.range))range=d.range;renderRows();save();message('データを読み込みました。');}catch(err){message('読み込めませんでした。'+err.message);}finally{e.target.value='';}};
+$('#reset').onclick=()=>{if(confirm('全商品を削除して初期化しますか？この操作は元に戻せません。')){items=[];start=P.month(new Date().getFullYear(),new Date().getMonth()+1);range=12;renderRows();save();message('全データを初期化しました。');}};
+const icsEscape=s=>s.replace(/\\/g,'\\\\').replace(/\r?\n/g,'\\n').replace(/;/g,'\\;').replace(/,/g,'\\,');
+const nextDay=m=>{const p=P.parts(m);return `${p.year}${String(p.month).padStart(2,'0')}02`;};
+const dateString=m=>{const p=P.parts(m);return `${p.year}${String(p.month).padStart(2,'0')}01`;};
+function fold(line){let result='',chunk='',size=0;for(const char of line){const len=new TextEncoder().encode(char).length;if(size+len>75){result+=chunk+'\r\n';chunk=' ';size=1;}chunk+=char;size+=len;}return result+chunk;}
+$('#ics').onclick=()=>{if(items.some(p=>!P.valid(p))){message('入力の不備を修正してから予定を出力してください。');return;}const choices=Array.from($('#reminders').querySelectorAll('input:checked')).map(e=>e.value);const lines=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Purchase Planner//JA','CALSCALE:GREGORIAN','METHOD:PUBLISH'];const stamp=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');let count=0;for(const p of items){const d=P.dates(p);for(const choice of choices){const m=choice==='loan'?d.loanEnd:d.replacement-Number(choice),title=choice==='loan'?'返済終了予定':choice==='0'?'買い替え予定':`買い替え${choice}か月前`;lines.push('BEGIN:VEVENT',`UID:${p.id}-${choice}@purchase-planner.local`,`DTSTAMP:${stamp}`,`DTSTART;VALUE=DATE:${dateString(m)}`,`DTEND;VALUE=DATE:${nextDay(m)}` ,`SUMMARY:${icsEscape((p.name||'商品')+'：'+title)}`,`DESCRIPTION:${icsEscape('購入・返済プランから出力。買い替え予定は'+P.label(d.replacement)+'。変更は自動同期されません。')}`,'BEGIN:VALARM','ACTION:DISPLAY','TRIGGER:PT9H',`DESCRIPTION:${icsEscape(title)}`,'END:VALARM','END:VEVENT');count++;}}if(!count){message('商品と通知の種類を選択してください。');return;}lines.push('END:VCALENDAR');download(lines.map(fold).join('\r\n')+'\r\n','text/calendar;charset=utf-8','purchase-reminders.ics');message(`${count}件の予定を出力しました。カレンダーに読み込んでください。`);};
+renderRows();if(storageOK)save();
+
