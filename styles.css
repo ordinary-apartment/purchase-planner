@@ -117,3 +117,9 @@
 #products th:nth-child(1){width:20%}#products th:nth-child(2){width:22%}#products th:nth-child(3){width:12%}#products th:nth-child(4){width:8%}#products th:nth-child(5){width:10%}#products th:nth-child(6){width:10%}#products th:nth-child(7){width:18%}
 #products .schedule-details .repayment{text-align:left;margin:0;font-size:inherit}
 #products .schedule-details .use-months{font-size:inherit}
+
+#products th:nth-child(1){width:20%}#products th:nth-child(2){width:24%}#products th:nth-child(3){width:12%}#products th:nth-child(4){width:8%}#products th:nth-child(5){width:18%}#products th:nth-child(6){width:18%}
+#products .schedule-details{display:block;margin-top:8px;font-size:12px}
+#products .schedule-details dt{margin-top:6px}
+#products .schedule-details dd{margin:0;word-break:normal;overflow-wrap:anywhere}
+@media(max-width:599px){#products .schedule-details{font-size:10px}#products .schedule-details .repayment,#products .schedule-details .use-months{font-size:10px}}
