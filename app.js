@@ -1,7 +1,7 @@
 'use strict';
 const P=Planner,$=s=>document.querySelector(s),KEY='purchase-planner-v1',yen=n=>n.toLocaleString('ja-JP')+'円';
 function currentMonth(){const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Tokyo',year:'numeric',month:'numeric'}).formatToParts(new Date());return P.month(Number(parts.find(p=>p.type==='year').value),Number(parts.find(p=>p.type==='month').value));}
-const samples=()=>[{id:'sample-mac',name:'Mac',price:240000,year:2026,month:10,loan:24,use:72},{id:'sample-camera',name:'カメラ',price:200000,year:2028,month:10,loan:24,use:96},{id:'sample-phone',name:'iPhone',price:150000,year:2030,month:10,loan:24,use:48}];
+const samples=()=>[];
 let items=samples(),start=P.month(2026,10),range=12,storageOK=true;
 function decode(data,draft=false){if(data.version!==1||!Array.isArray(data.items)||data.items.length>200)throw Error('形式が異なります。');if(!data.items.every(p=>p&&typeof p.name==='string'&&p.name.length<=200&&(draft?['price','year','month','loan','use'].every(k=>p[k]===null||typeof p[k]==='number'&&Number.isFinite(p[k])):P.valid(p))))throw Error('商品データの数値や商品名を確認してください。');return data.items.map(p=>({...p,id:typeof p.id==='string'&&/^[a-zA-Z0-9-]{1,80}$/.test(p.id)?p.id:crypto.randomUUID()}));}
 try{const raw=localStorage.getItem(KEY);if(raw){const d=JSON.parse(raw);items=decode(d,true);if(Number.isInteger(d.start)&&d.start>=P.month(1900,1)&&d.start<=P.month(2300,12))start=d.start;if([12,36,60,120].includes(d.range))range=d.range;}}catch(e){storageOK=false;$('#save-status').textContent='保存データを復元できませんでした';}
