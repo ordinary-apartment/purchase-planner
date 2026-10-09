@@ -94,3 +94,22 @@
  .schedule-details dd{word-break:normal;overflow-wrap:anywhere}
  #products input:focus,#products select:focus,#products textarea:focus{font-size:16px!important}
 }
+
+/* Match name type to other fields and place deletion beneath the name. */
+#products th:nth-child(1){width:16%}
+#products th:nth-child(2){width:17%}
+#products th:nth-child(3){width:10%}
+#products th:nth-child(4){width:6%}
+#products th:nth-child(5){width:7%}
+#products th:nth-child(6){width:7%}
+#products th:nth-child(7){width:7%}
+#products th:nth-child(8){width:12%}
+#products th:nth-child(9){width:18%}
+.product-scroll{padding-right:0}
+#products textarea.name{font-size:16px}
+#products .col-name{text-align:left}
+#products .remove-row{position:static;transform:none;display:block;margin:4px auto 0;min-height:44px;width:44px;line-height:44px;font-size:24px}
+@media(max-width:599px){#products textarea.name{font-size:10px}#products textarea.name:focus{font-size:10px!important}}
+
+#products input,#products select,#products textarea.name{font-size:14px}
+@media(max-width:599px){#products input,#products select,#products textarea.name,#products input:focus,#products select:focus,#products textarea.name:focus{font-size:10px!important}}
